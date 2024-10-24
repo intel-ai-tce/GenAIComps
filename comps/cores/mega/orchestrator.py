@@ -17,6 +17,8 @@ from ..proto.docarray import LLMParams
 from .constants import ServiceType
 from .dag import DAG
 from .logger import CustomLogger
+import pandas as pd
+import time
 
 logger = CustomLogger("comps-core-orchestrator")
 LOGFLAG = os.getenv("LOGFLAG", True)
@@ -27,7 +29,16 @@ class ServiceOrchestrator(DAG):
 
     def __init__(self) -> None:
         self.services = {}  # all services, id -> service
+        self.chrome_tracing = True
+        if self.chrome_tracing is True:
+            self.pdata = pd.DataFrame(columns=('name', 'timestamp', 'duration', 'endpoint'))
         super().__init__()
+
+    def append_row(self, df, row):
+           return pd.concat([
+                df, 
+                pd.DataFrame([row], columns=row.index)]
+           ).reset_index(drop=True)
 
     def add(self, service):
         if service.name not in self.services:
@@ -115,6 +126,24 @@ class ServiceOrchestrator(DAG):
             if node not in nodes_to_keep:
                 runtime_graph.delete_node_if_exists(node)
 
+        # TEST CODES Louie
+        if self.chrome_tracing is True:
+            from .profile_utils import TraceProfiler
+            import io
+            with io.open('./opea.json', mode='wb') as fh:
+                tp = TraceProfiler(output=fh)
+                tp.install()
+                for index, row in self.pdata.iterrows():
+                    #if row["time"] != None and row["time"].find('.') != -1:
+                    tp.fire_event(
+                        event_type='exec',
+                        event_name=row["name"],
+                        event_cat='microservice',
+                        timestamp=str(float(row["timestamp"])),
+                        duration=str(float(row["duration"])),
+                    )
+                tp.shutdown()
+
         return result_dict, runtime_graph
 
     def process_outputs(self, prev_nodes: List, result_dict: Dict) -> Dict:
@@ -137,7 +166,9 @@ class ServiceOrchestrator(DAG):
         # send the cur_node request/reply
         endpoint = self.services[cur_node].endpoint_path
         llm_parameters_dict = llm_parameters.dict()
-        logger.info(f"Testing Executing {cur_node} with endpoint {endpoint}") 
+        if self.chrome_tracing is True:
+            logger.info(f"Testing Executing {cur_node} with endpoint {endpoint}")
+            start = time.time()
         if (
             self.services[cur_node].service_type == ServiceType.LLM
             or self.services[cur_node].service_type == ServiceType.LVM
@@ -195,8 +226,12 @@ class ServiceOrchestrator(DAG):
                                     yield from self.token_generator(res_txt, is_last=is_last)
                             else:
                                 yield chunk
-
-            logger.info(f"Finish Executing {cur_node} with endpoint {endpoint}") 
+            if self.chrome_tracing is True:
+                end = time.time()
+                duration = end - start
+                new_row = pd.Series({'name':cur_node, 'timestamp':start, 'duration': duration, 'endpoint':endpoint})
+                self.pdata = self.append_row(self.pdata, new_row)
+                logger.info(f"Finish Executing {cur_node} with endpoint {endpoint}") 
             return (
                 StreamingResponse(self.align_generator(generate(), **kwargs), media_type="text/event-stream"),
                 cur_node,
@@ -222,7 +257,12 @@ class ServiceOrchestrator(DAG):
                     # post process
                     data = self.align_outputs(data, cur_node, inputs, runtime_graph, llm_parameters_dict, **kwargs)
 
-                logger.info(f"Finish Executing {cur_node} with endpoint {endpoint}") 
+                if self.chrome_tracing is True:
+                    end = time.time()
+                    duration = end - start
+                    new_row = pd.Series({'name':cur_node, 'timestamp':start, 'duration': duration, 'endpoint':endpoint})
+                    self.pdata = self.append_row(self.pdata, new_row)
+                    logger.info(f"Finish Executing {cur_node} with endpoint {endpoint}") 
                 return data, cur_node
 
     def align_inputs(self, inputs, *args, **kwargs):
