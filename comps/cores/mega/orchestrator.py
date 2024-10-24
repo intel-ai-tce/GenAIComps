@@ -19,7 +19,7 @@ from .dag import DAG
 from .logger import CustomLogger
 
 logger = CustomLogger("comps-core-orchestrator")
-LOGFLAG = os.getenv("LOGFLAG", False)
+LOGFLAG = os.getenv("LOGFLAG", True)
 
 
 class ServiceOrchestrator(DAG):
@@ -137,6 +137,7 @@ class ServiceOrchestrator(DAG):
         # send the cur_node request/reply
         endpoint = self.services[cur_node].endpoint_path
         llm_parameters_dict = llm_parameters.dict()
+        logger.info(f"Testing Executing {cur_node} with endpoint {endpoint}") 
         if (
             self.services[cur_node].service_type == ServiceType.LLM
             or self.services[cur_node].service_type == ServiceType.LVM
@@ -195,6 +196,7 @@ class ServiceOrchestrator(DAG):
                             else:
                                 yield chunk
 
+            logger.info(f"Finish Executing {cur_node} with endpoint {endpoint}") 
             return (
                 StreamingResponse(self.align_generator(generate(), **kwargs), media_type="text/event-stream"),
                 cur_node,
@@ -220,6 +222,7 @@ class ServiceOrchestrator(DAG):
                     # post process
                     data = self.align_outputs(data, cur_node, inputs, runtime_graph, llm_parameters_dict, **kwargs)
 
+                logger.info(f"Finish Executing {cur_node} with endpoint {endpoint}") 
                 return data, cur_node
 
     def align_inputs(self, inputs, *args, **kwargs):

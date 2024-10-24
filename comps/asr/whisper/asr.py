@@ -50,4 +50,5 @@ async def audio_to_text(audio: Base64ByteStrDoc):
 if __name__ == "__main__":
     asr_endpoint = os.getenv("ASR_ENDPOINT", "http://localhost:7066")
     logger.info("[asr - router] ASR initialized.")
+    logger.info("[asr - router] ASR TESTING!!.")
     opea_microservices["opea_service@asr"].start()
