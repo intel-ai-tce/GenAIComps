@@ -231,7 +231,7 @@ class ServiceOrchestrator(DAG):
                 end = time.time()
                 duration = end - start
                 new_row = pd.Series({'name':cur_node, 'timestamp':start, 'duration': duration, 'endpoint':endpoint})
-                self.pdata = append_row(self.pdata, new_row)
+                self.pdata = self.append_row(self.pdata, new_row)
                 logger.info(f"Finish Executing {cur_node} with endpoint {endpoint}") 
             return (
                 StreamingResponse(self.align_generator(generate(), **kwargs), media_type="text/event-stream"),
@@ -262,7 +262,7 @@ class ServiceOrchestrator(DAG):
                     end = time.time()
                     duration = end - start
                     new_row = pd.Series({'name':cur_node, 'timestamp':start, 'duration': duration, 'endpoint':endpoint})
-                    self.pdata = append_row(self.pdata, new_row)
+                    self.pdata = self.append_row(self.pdata, new_row)
                     logger.info(f"Finish Executing {cur_node} with endpoint {endpoint}") 
                 return data, cur_node
 
