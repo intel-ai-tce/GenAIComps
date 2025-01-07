@@ -17,11 +17,11 @@ from comps import (
     SearchedDoc,
     ServiceType,
     opea_microservices,
-    opea_telemetry,
     register_microservice,
 )
 from comps.cores.mega.utils import ConfigError, get_access_token, load_model_configs
 from comps.cores.proto.api_protocol import ChatCompletionRequest
+from comps.cores.telemetry.opea_telemetry import opea_telemetry
 
 logger = CustomLogger("llm_vllm")
 logflag = os.getenv("LOGFLAG", False)
@@ -72,6 +72,7 @@ def post_process_text(text: str):
     host="0.0.0.0",
     port=9000,
 )
+@opea_telemetry
 async def llm_generate(input: Union[LLMParamsDoc, ChatCompletionRequest, SearchedDoc]):
     if logflag:
         logger.info(input)

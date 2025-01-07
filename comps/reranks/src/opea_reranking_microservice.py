@@ -18,6 +18,7 @@ from comps import (
 )
 from comps.cores.proto.api_protocol import ChatCompletionRequest, RerankingRequest, RerankingResponse
 from comps.cores.proto.docarray import LLMParamsDoc, LVMVideoDoc, RerankedDoc, SearchedDoc, SearchedMultimodalDoc
+from comps.cores.telemetry.opea_telemetry import opea_telemetry
 
 logger = CustomLogger("opea_reranking_microservice")
 logflag = os.getenv("LOGFLAG", False)
@@ -34,6 +35,7 @@ loader = OpeaComponentLoader(rerank_component_name, description=f"OPEA RERANK Co
     host="0.0.0.0",
     port=8000,
 )
+@opea_telemetry
 @register_statistics(names=["opea_service@reranking"])
 async def reranking(
     input: Union[SearchedMultimodalDoc, SearchedDoc, RerankingRequest, ChatCompletionRequest]

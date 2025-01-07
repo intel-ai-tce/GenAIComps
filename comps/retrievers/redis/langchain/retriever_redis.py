@@ -30,6 +30,7 @@ from comps.cores.proto.api_protocol import (
     RetrievalResponse,
     RetrievalResponseData,
 )
+from comps.cores.telemetry.opea_telemetry import opea_telemetry
 from comps.embeddings.src.integrations.dependency.bridgetower import BridgeTowerEmbedding
 
 logger = CustomLogger("retriever_redis")
@@ -46,6 +47,7 @@ bridge_tower_embedding = os.getenv("BRIDGE_TOWER_EMBEDDING")
     host="0.0.0.0",
     port=7000,
 )
+@opea_telemetry
 @register_statistics(names=["opea_service@retriever_redis"])
 async def retrieve(
     input: Union[EmbedDoc, EmbedMultimodalDoc, RetrievalRequest, ChatCompletionRequest]

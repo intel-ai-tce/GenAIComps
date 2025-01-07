@@ -19,6 +19,7 @@ from comps import (
     statistics_dict,
 )
 from comps.cores.proto.api_protocol import ChatCompletionRequest
+from comps.cores.telemetry.opea_telemetry import opea_telemetry
 
 logger = CustomLogger("llm")
 logflag = os.getenv("LOGFLAG", False)
@@ -36,6 +37,7 @@ loader = OpeaComponentLoader(llm_component_name, description=f"OPEA LLM Componen
     host="0.0.0.0",
     port=9000,
 )
+@opea_telemetry
 @register_statistics(names=["opea_service@llm"])
 async def llm_generate(input: Union[LLMParamsDoc, ChatCompletionRequest, SearchedDoc]):
     start = time.time()
