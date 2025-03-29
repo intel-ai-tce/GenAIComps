@@ -9,3 +9,13 @@ search_knowledge_base:
       type: str
       description: query
   return_output: retrieved_data
+
+search_web:
+   description: 
+   env: GOOGLE_CSE_ID, GOOGLE_API_KEY
+   callable_api: custom_tools.py:search_web_google
+   args_schema:
+     query:
+       type: str
+       description: query
+   return_output: retrieved_data

@@ -30,6 +30,8 @@ from comps.cores.proto.api_protocol import (
     MessageObject,
     ThreadObject,
 )
+from comps.cores.telemetry.opea_telemetry import opea_telemetry, tracer
+ENABLE_OPEA_TELEMETRY = bool(os.environ.get("TELEMETRY_ENDPOINT"))
 
 logger = CustomLogger("comps-react-agent")
 logflag = os.getenv("LOGFLAG", False)
@@ -58,6 +60,7 @@ class AgentCompletionRequest(ChatCompletionRequest):
     host="0.0.0.0",
     port=args.port,
 )
+@opea_telemetry
 async def llm_generate(input: AgentCompletionRequest):
     if logflag:
         logger.info(input)
@@ -148,6 +151,7 @@ class CreateAssistant(CreateAssistantsRequest):
     host="0.0.0.0",
     port=args.port,
 )
+@opea_telemetry
 def create_assistants(input: CreateAssistant):
     # 1. initialize the agent
     print("@@@ Initializing agent with config: ", input.agent_config)
@@ -184,6 +188,7 @@ def create_assistants(input: CreateAssistant):
     host="0.0.0.0",
     port=args.port,
 )
+@opea_telemetry
 def create_threads(input: CreateThreadsRequest):
     # create a memory KV for the thread
     thread_inst, thread_id = instantiate_thread_memory()
@@ -205,6 +210,7 @@ def create_threads(input: CreateThreadsRequest):
     host="0.0.0.0",
     port=args.port,
 )
+@opea_telemetry
 def create_messages(thread_id, input: CreateMessagesRequest):
     with threads_global_kv as g_threads:
         thread_inst, _, _ = g_threads[thread_id]
@@ -249,6 +255,7 @@ def create_messages(thread_id, input: CreateMessagesRequest):
     host="0.0.0.0",
     port=args.port,
 )
+@opea_telemetry
 def create_run(thread_id, input: CreateRunResponse):
     with threads_global_kv as g_threads:
         thread_inst, _, status = g_threads[thread_id]
@@ -296,6 +303,7 @@ def create_run(thread_id, input: CreateRunResponse):
     host="0.0.0.0",
     port=args.port,
 )
+@opea_telemetry
 def cancel_run(thread_id):
     with threads_global_kv as g_threads:
         thread_inst, created_at, status = g_threads[thread_id]
